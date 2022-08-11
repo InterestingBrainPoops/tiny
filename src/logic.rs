@@ -44,18 +44,14 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
     let mut actual_head_locations = vec![];
     for (idx, head) in possible_head_locations.iter().enumerate() {
         for snake in &board.snakes {
+            if manhattan(&snake.head, head) == 1 && snake.id != you.id && snake.length >= you.length
+            {
+                continue;
+            }
             if !snake.body[..snake.body.len() - 1].contains(head) {
                 actual_moves.push(possible_moves[idx]);
                 actual_head_locations.push(*head);
                 continue;
-            }
-
-            if !(manhattan(&snake.head, head) == 1
-                && snake.id != you.id
-                && snake.length >= you.length)
-            {
-                actual_moves.push(possible_moves[idx]);
-                actual_head_locations.push(*head);
             }
         }
     }
