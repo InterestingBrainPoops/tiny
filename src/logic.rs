@@ -46,12 +46,15 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
         for snake in &board.snakes {
             if manhattan(&snake.head, head) == 1 && snake.id != you.id && snake.length >= you.length
             {
+                println!(
+                    "Move {} would have lead to head_to_head death",
+                    possible_moves[idx]
+                );
                 continue;
             }
             if !snake.body[..snake.body.len() - 1].contains(head) {
                 actual_moves.push(possible_moves[idx]);
                 actual_head_locations.push(*head);
-                continue;
             }
         }
     }
