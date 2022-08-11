@@ -9,8 +9,11 @@ use serde::Serialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::env;
+use std::ops::Add;
 
+mod eval;
 mod logic;
+mod types;
 
 // Request types derived from https://docs.battlesnake.com/references/api#object-definitions
 // For a full example of Game Board data, see https://docs.battlesnake.com/references/api/sample-move-request
@@ -21,17 +24,22 @@ pub struct Game {
     ruleset: HashMap<String, Value>,
     timeout: u32,
 }
+impl From<Coord> for u128 {
+    fn from(input: Coord) -> Self {
+        1 << (input.x + input.y * 11)
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Board {
-    height: u32,
-    width: u32,
+    height: i32,
+    width: i32,
     food: Vec<Coord>,
     snakes: Vec<Battlesnake>,
     hazards: Vec<Coord>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Battlesnake {
     id: String,
     name: String,
@@ -46,10 +54,27 @@ pub struct Battlesnake {
     squad: Option<String>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Coord {
-    x: u32,
-    y: u32,
+    x: i32,
+    y: i32,
+}
+
+impl Coord {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+}
+
+impl Add for Coord {
+    type Output = Coord;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Coord {
+            x: self.x + rhs.x,
+            y: rhs.y + self.y,
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug)]
