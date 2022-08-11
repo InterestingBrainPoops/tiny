@@ -119,6 +119,6 @@ fn successors(coord: &Coord, board: &Board, bb: u128) -> Vec<(Coord, i32)> {
     out.iter().map(|p| (*p, 1)).collect()
 }
 
-fn manhattan(c1: &Coord, c2: &Coord) -> i32 {
+pub fn manhattan(c1: &Coord, c2: &Coord) -> i32 {
     (c1.x - c2.x).abs() + (c1.y - c2.y).abs()
 }

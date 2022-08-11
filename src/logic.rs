@@ -5,7 +5,7 @@ use std::{collections::HashMap, f64::consts::E};
 use log::info;
 
 use crate::{
-    eval,
+    eval::{self, manhattan},
     types::{Position, Snake},
     Battlesnake, Board, Coord, Game,
 };
@@ -47,9 +47,19 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
             if !snake.body[..snake.body.len() - 1].contains(head) {
                 actual_moves.push(possible_moves[idx]);
                 actual_head_locations.push(*head);
+                continue;
+            }
+
+            if !(manhattan(&snake.head, head) == 1
+                && snake.id != you.id
+                && snake.length >= you.length)
+            {
+                actual_moves.push(possible_moves[idx]);
+                actual_head_locations.push(*head);
             }
         }
     }
+
     let possible_moves = actual_moves;
     let possible_head_locations = actual_head_locations;
     let mut actual_moves = vec![];
@@ -89,8 +99,14 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
             all_bb: 0,
         };
         let mut you_body = you.body.clone();
+        let mut food = board.food.clone();
+
         you_body.pop();
         you_body.insert(0, *head);
+        if food.contains(&you_body[0]) {
+            food.remove(food.iter().position(|&x| x == you_body[0]).unwrap());
+            pos.my_health = 100;
+        }
         pos.board.snakes.push(Snake { body: you_body });
         pos.board.snakes.push(Snake {
             body: other.body.clone(),
