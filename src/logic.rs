@@ -120,6 +120,7 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
         }
     }
     let chosen = actual_moves[highest_idx];
+    println!("{} MOVE {} SCORE {}", game.id, chosen, highest_score);
     info!("{} MOVE {} SCORE {}", game.id, chosen, highest_score);
 
     chosen
