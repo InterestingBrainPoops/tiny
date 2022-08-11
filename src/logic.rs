@@ -44,7 +44,7 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
     let mut actual_head_locations = vec![];
     for (idx, head) in possible_head_locations.iter().enumerate() {
         for snake in &board.snakes {
-            if snake.body[..snake.body.len() - 1].contains(head) {
+            if !snake.body[..snake.body.len() - 1].contains(head) {
                 actual_moves.push(possible_moves[idx]);
                 actual_head_locations.push(*head);
             }
@@ -120,7 +120,6 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
         }
     }
     let chosen = actual_moves[highest_idx];
-    println!("{} MOVE {} SCORE {}", game.id, chosen, highest_score);
     info!("{} MOVE {} SCORE {}", game.id, chosen, highest_score);
 
     chosen
