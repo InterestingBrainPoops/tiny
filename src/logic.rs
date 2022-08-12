@@ -17,7 +17,7 @@ pub fn get_info() -> Value {
     return json!({
         "apiversion": "1",
         "author": "BrokenKeyboard",
-        "color": "#888888",
+        "color": "#54764B",
         "head": "default",
         "tail": "default",
     });
@@ -43,6 +43,7 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
     let mut actual_moves = vec![];
     let mut actual_head_locations = vec![];
     for (idx, head) in possible_head_locations.iter().enumerate() {
+        let mut death = false;
         for snake in &board.snakes {
             if manhattan(&snake.head, head) == 1 && snake.id != you.id && snake.length >= you.length
             {
@@ -50,17 +51,26 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
                     "Move {} would have lead to head_to_head death",
                     possible_moves[idx]
                 );
-                continue;
+                death = true;
+                break;
             }
-            if !snake.body[..snake.body.len() - 1].contains(head) {
-                actual_moves.push(possible_moves[idx]);
-                actual_head_locations.push(*head);
+            if snake.body[..snake.body.len() - 1].contains(head) {
+                death = true;
+                println!(
+                    "Move {} would have lead to ramming death",
+                    possible_moves[idx]
+                );
+                break;
             }
         }
+        if !death {
+            actual_moves.push(possible_moves[idx]);
+            actual_head_locations.push(*head);
+        }
     }
-
-    let possible_moves = actual_moves;
-    let possible_head_locations = actual_head_locations;
+    println!("Moves :{:?}", actual_moves);
+    let possible_moves = actual_moves.clone();
+    let possible_head_locations = actual_head_locations.clone();
     let mut actual_moves = vec![];
     let mut actual_head_locations = vec![];
     for (idx, head) in possible_head_locations.iter().enumerate() {
