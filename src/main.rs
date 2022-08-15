@@ -128,8 +128,6 @@ fn rocket() -> _ {
     // If we find a value for `PORT`, we set `ROCKET_PORT` to that value.
     if let Ok(port) = env::var("PORT") {
         env::set_var("ROCKET_PORT", &port);
-    } else {
-        env::set_var("ROCKET_PORT", "8080");
     }
 
     // We default to 'info' level logging. But if the `RUST_LOG` environment variable is set,
