@@ -1,4 +1,5 @@
 use rand::seq::SliceRandom;
+use rocket::tokio::time::Instant;
 use serde_json::{json, Value};
 use std::{collections::HashMap, f64::consts::E};
 
@@ -45,15 +46,6 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
     for (idx, head) in possible_head_locations.iter().enumerate() {
         let mut death = false;
         for snake in &board.snakes {
-            if manhattan(&snake.head, head) == 1 && snake.id != you.id && snake.length >= you.length
-            {
-                println!(
-                    "Move {} would have lead to head_to_head death",
-                    possible_moves[idx]
-                );
-                death = true;
-                break;
-            }
             if snake.body[..snake.body.len() - 1].contains(head) {
                 death = true;
                 println!(
@@ -68,15 +60,47 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
             actual_head_locations.push(*head);
         }
     }
-    println!("Moves :{:?}", actual_moves);
-    let possible_moves = actual_moves.clone();
-    let possible_head_locations = actual_head_locations.clone();
+
+    let mut possible_head_locations = actual_head_locations;
+    let mut possible_moves = actual_moves;
+
     let mut actual_moves = vec![];
     let mut actual_head_locations = vec![];
     for (idx, head) in possible_head_locations.iter().enumerate() {
+        let mut death = false;
+        for snake in &board.snakes {
+            if manhattan(&snake.head, head) == 1 && snake.id != you.id && snake.length >= you.length
+            {
+                println!(
+                    "Move {} would have lead to head_to_head death",
+                    possible_moves[idx]
+                );
+                death = true;
+                break;
+            }
+        }
+        if !death {
+            actual_moves.push(possible_moves[idx]);
+            actual_head_locations.push(*head);
+        }
+    }
+    if actual_moves.len() == 1 {
+        return actual_moves[0];
+    } else if actual_moves.len() != 0 {
+        possible_moves = actual_moves.clone();
+        possible_head_locations = actual_head_locations.clone();
+        actual_moves = vec![];
+        actual_head_locations = vec![];
+    } else if actual_moves.len() == 0 {
+        actual_moves = vec![];
+        actual_head_locations = vec![];
+    }
+    println!("Moves :{:?}", actual_moves);
+
+    for (idx, head) in possible_head_locations.iter().enumerate() {
         if !(head.x < 0 || head.y < 0 || head.y >= board.height || head.x >= board.width) {
             actual_moves.push(possible_moves[idx]);
-            actual_head_locations.push(head);
+            actual_head_locations.push(*head);
         }
     }
     if actual_moves.len() == 1 {
@@ -86,11 +110,13 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
     }
     let mut values = vec![];
     let weights = [
-        0.0603023030685956,
-        -0.00733339763149862,
-        -0.02557371776507608,
-        0.05614206228233734,
-        0.028001606267965776,
+        0.02887396891287721,
+        -0.024065560310748118,
+        -0.00024165487017368143,
+        0.038723174814708515,
+        0.00470536898375267,
+        0.0006659711268774564,
+        0.0,
     ];
     let other = if board.snakes[0].id != you.id {
         board.snakes[0].clone()
@@ -111,7 +137,7 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
         let mut food = board.food.clone();
 
         you_body.pop();
-        you_body.insert(0, *head);
+        you_body.insert(0, head);
         if food.contains(&you_body[0]) {
             food.remove(food.iter().position(|&x| x == you_body[0]).unwrap());
             pos.my_health = 100;
@@ -126,13 +152,14 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
                 pos.all_bb |= u128::from(*body);
             }
         }
-
+        let t0 = Instant::now();
         let output = eval::score(&pos);
         let score: f64 = output
             .iter()
             .enumerate()
             .map(|(idx, x)| x * weights[idx])
             .sum();
+        println!("Time taken for 1 eval: {:?}", Instant::now() - t0);
         values.push(better_sigmoid(score));
     }
 

@@ -1,5 +1,5 @@
 use crate::Coord;
-pub const NUM_PARAMS: usize = 5;
+pub const NUM_PARAMS: usize = 7;
 
 #[derive(Clone)]
 pub struct Position {
