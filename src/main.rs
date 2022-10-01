@@ -64,6 +64,13 @@ impl Coord {
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
     }
+
+    pub fn wrap(self, width: i32, height: i32) -> Self {
+        Self {
+            x: self.x % width,
+            y: self.y % height,
+        }
+    }
 }
 
 impl Add for Coord {
@@ -110,7 +117,7 @@ fn handle_move(move_req: Json<GameState>) -> Json<Value> {
         &move_req.board,
         &move_req.you,
     );
-
+    println!("Chosen move: {}", chosen);
     Json(json!({ "move": chosen }))
 }
 

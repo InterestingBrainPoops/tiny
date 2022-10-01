@@ -35,10 +35,10 @@ pub fn end(game: &Game, _turn: &u32, _board: &Board, _you: &Battlesnake) {
 pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &'static str {
     let possible_moves = vec!["up", "down", "left", "right"];
     let possible_head_locations = vec![
-        you.head + Coord::new(0, 1),
-        you.head + Coord::new(0, -1),
-        you.head + Coord::new(-1, 0),
-        you.head + Coord::new(1, 0),
+        (you.head + Coord::new(0, 1)).wrap(board.width, board.height),
+        (you.head + Coord::new(0, -1)).wrap(board.width, board.height),
+        (you.head + Coord::new(-1, 0)).wrap(board.width, board.height),
+        (you.head + Coord::new(1, 0)).wrap(board.width, board.height),
     ];
 
     let mut actual_moves = vec![];
@@ -46,7 +46,7 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
     for (idx, head) in possible_head_locations.iter().enumerate() {
         let mut death = false;
         for snake in &board.snakes {
-            if snake.body.contains(head) {
+            if snake.body[..(snake.body.len() - 1)].contains(head) {
                 death = true;
                 println!(
                     "Move {} would have lead to ramming death",
@@ -60,12 +60,14 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
             actual_head_locations.push(*head);
         }
     }
-    let mut possible_moves = actual_moves;
-    let mut possible_head_locations = actual_head_locations;
+    let possible_moves = actual_moves;
+    let possible_head_locations = actual_head_locations;
     let mut actual_moves = vec![];
     let mut actual_head_locations = vec![];
     for (idx, head) in possible_head_locations.iter().enumerate() {
-        if !(head.x < 0 || head.y < 0 || head.y >= board.height || head.x >= board.width) {
+        if !(head.x < 0 || head.y < 0 || head.y >= board.height || head.x >= board.width)
+            && !board.hazards.contains(head)
+        {
             actual_moves.push(possible_moves[idx]);
             actual_head_locations.push(*head);
         }
@@ -120,20 +122,29 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
             food.remove(food.iter().position(|&x| x == you_body[0]).unwrap());
             pos.my_health = 100;
         }
-        pos.board.snakes.push(Snake { body: you_body });
+        pos.board.snakes.push(Snake {
+            body: you_body.clone(),
+        });
         pos.board.snakes.push(Snake {
             body: other.body.clone(),
         });
         pos.board.food = board.food.clone();
         for snake in &pos.board.snakes {
-            for body in &snake.body {
-                pos.all_bb |= u128::from(*body);
+            if snake.body[0] != you_body[0] {
+                for body in &snake.body[..(snake.body.len() - 1)] {
+                    pos.all_bb |= u128::from(*body);
+                }
+            } else {
+                for body in &snake.body {
+                    pos.all_bb |= u128::from(*body);
+                }
             }
         }
 
         for hazard in &board.hazards {
             pos.all_bb |= u128::from(*hazard);
         }
+
         let t0 = Instant::now();
         let output = eval::score(&pos);
         let score: f64 = output

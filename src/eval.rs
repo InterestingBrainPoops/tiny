@@ -203,7 +203,7 @@ fn successors(coord: &Coord, board: &Board, bb: u128) -> Vec<(Coord, i32)> {
     // possible ending squares
     let mut new_possible = vec![];
     for thing in &possible {
-        new_possible.push(*thing + *coord);
+        new_possible.push((*thing + *coord).wrap(11, 11));
     }
 
     let mut out = vec![];
