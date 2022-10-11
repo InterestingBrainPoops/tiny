@@ -54,23 +54,25 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
                 );
                 break;
             }
+            if death {
+                break;
+            }
         }
-        if !death {
-            actual_moves.push(possible_moves[idx]);
-            actual_head_locations.push(*head);
+        if death {
+            continue;
         }
-    }
-    let possible_moves = actual_moves;
-    let possible_head_locations = actual_head_locations;
-    let mut actual_moves = vec![];
-    let mut actual_head_locations = vec![];
-    for (idx, head) in possible_head_locations.iter().enumerate() {
-        if !(head.x < 0 || head.y < 0 || head.y >= board.height || head.x >= board.width)
-            && !board.hazards.contains(head)
+        if (head.x < 0 || head.y < 0 || head.y >= board.height || head.x >= board.width)
+            || board.hazards.contains(head)
         {
-            actual_moves.push(possible_moves[idx]);
-            actual_head_locations.push(*head);
+            continue;
         }
+        if board.snakes.iter().any(|snake| {
+            snake.id != you.id && manhattan(&snake.head, head) == 1 && snake.length >= you.length
+        }) {
+            continue;
+        }
+        actual_moves.push(possible_moves[idx]);
+        actual_head_locations.push(*head);
     }
     if actual_moves.len() == 1 {
         return actual_moves[0];
@@ -165,7 +167,10 @@ pub fn get_move(game: &Game, _turn: &u32, board: &Board, you: &Battlesnake) -> &
         }
     }
     let chosen = actual_moves[highest_idx];
-    info!("{} MOVE {} SCORE {}", game.id, chosen, highest_score);
+    info!(
+        "GAME ID : {} MOVE: {} SCORE: {}",
+        game.id, chosen, highest_score
+    );
 
     chosen
 }
